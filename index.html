@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="BioScan" />
+    <meta name="theme-color" content="#06b6d4" />
+    <meta name="description" content="BioScan — AI-powered biological field scanner. Identify plants, birds, insects, mushrooms and more." />
+
+    <link rel="icon" type="image/svg+xml" href="/logo.svg" />
+    <link rel="apple-touch-icon" href="/logo.svg" />
+    <link rel="manifest" href="/manifest.webmanifest" />
+
+    <title>BioScan</title>
+
+    <style>
+      html, body { margin: 0; padding: 0; background: #070d14; }
+      @keyframes resultBurst {
+        0%   { transform: translate(0,0) scale(0.3) rotate(0deg); opacity: 1; }
+        60%  { opacity: 1; }
+        100% { transform: translate(var(--tx,0px),var(--ty,0px)) scale(1.6) rotate(var(--rot,0deg)); opacity: 0; }
+      }
+    </style>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.jsx"></script>
+    <script>
+      if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+          navigator.serviceWorker.register('/sw.js');
+        });
+      }
+    </script>
+  </body>
+</html>

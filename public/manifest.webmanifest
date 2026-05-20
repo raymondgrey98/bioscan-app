@@ -1,0 +1,36 @@
+{
+  "name": "BioScan — Field Intelligence Scanner",
+  "short_name": "BioScan",
+  "description": "AI-powered biological scanner for field identification. Identify plants, birds, insects and more.",
+  "start_url": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#070d14",
+  "theme_color": "#06b6d4",
+  "categories": ["lifestyle", "utilities", "education"],
+  "icons": [
+    {
+      "src": "/logo.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ],
+  "screenshots": [],
+  "shortcuts": [
+    {
+      "name": "Quick Scan",
+      "short_name": "Scan",
+      "description": "Open camera and scan",
+      "url": "/",
+      "icons": [{ "src": "/logo.svg", "sizes": "any" }]
+    },
+    {
+      "name": "Emergency SOS",
+      "short_name": "SOS",
+      "description": "Open emergency scanner",
+      "url": "/?tab=sos",
+      "icons": [{ "src": "/logo.svg", "sizes": "any" }]
+    }
+  ]
+}

@@ -1,0 +1,37 @@
+@import "tailwindcss";
+
+* { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+body {
+  margin: 0;
+  background: #070d14;
+  font-family: 'Inter', system-ui, sans-serif;
+  color: #e2e8f0;
+  overscroll-behavior: none;
+  -webkit-font-smoothing: antialiased;
+}
+
+@keyframes scanLine {
+  0%   { top: 5%; }
+  100% { top: 95%; }
+}
+@keyframes pulseRing {
+  0%   { transform: scale(1);   opacity: 0.8; }
+  100% { transform: scale(1.6); opacity: 0; }
+}
+@keyframes resultSlide {
+  from { transform: translateY(24px); opacity: 0; }
+  to   { transform: translateY(0);    opacity: 1; }
+}
+@keyframes shimmer {
+  0%   { background-position: -200% 0; }
+  100% { background-position:  200% 0; }
+}
+
+.result-enter { animation: resultSlide 0.4s ease-out forwards; }
+
+.shimmer {
+  background: linear-gradient(90deg, #0d1a27 25%, #162438 50%, #0d1a27 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+}
