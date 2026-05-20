@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <rect width="512" height="512" rx="96" fill="#070d14"/>
+  <!-- Outer ring -->
+  <circle cx="256" cy="256" r="210" fill="none" stroke="#06b6d4" stroke-width="6" stroke-dasharray="30 18" opacity="0.35"/>
+  <!-- Corner brackets -->
+  <path d="M80 150 L80 80 L150 80" fill="none" stroke="#06b6d4" stroke-width="18" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M432 150 L432 80 L362 80" fill="none" stroke="#06b6d4" stroke-width="18" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M80 362 L80 432 L150 432" fill="none" stroke="#06b6d4" stroke-width="18" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M432 362 L432 432 L362 432" fill="none" stroke="#06b6d4" stroke-width="18" stroke-linecap="round" stroke-linejoin="round"/>
+  <!-- Leaf shape -->
+  <path d="M256 140 C210 165 185 210 198 256 C210 295 240 318 256 325 C272 318 302 295 314 256 C327 210 302 165 256 140Z" fill="#06b6d4" opacity="0.95"/>
+  <!-- Leaf vein -->
+  <line x1="256" y1="140" x2="256" y2="325" stroke="#070d14" stroke-width="8" opacity="0.6"/>
+  <!-- Side accent lines -->
+  <line x1="60" y1="256" x2="110" y2="256" stroke="#06b6d4" stroke-width="6" opacity="0.4"/>
+  <line x1="402" y1="256" x2="452" y2="256" stroke="#06b6d4" stroke-width="6" opacity="0.4"/>
+  <!-- Glow dot center -->
+  <circle cx="256" cy="256" r="12" fill="#06b6d4" opacity="0.3"/>
+</svg>
