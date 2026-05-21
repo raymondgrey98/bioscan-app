@@ -438,43 +438,79 @@ em.sci { font-style: italic; color: #94a3b8; font-size: 0.85rem; }
 .typing-dot:nth-child(2) { animation-delay: 0.18s; }
 .typing-dot:nth-child(3) { animation-delay: 0.36s; }
 
-/* Animated background particles */
+/* ── Live background animations ─────────────────────────────── */
+
+/* Leaves float upward */
 @keyframes floraFloat {
   0%   { transform: translateY(100vh) rotate(0deg);   opacity: 0; }
+  8%   { opacity: 0.7; }
+  92%  { opacity: 0.5; }
+  100% { transform: translateY(-140px) rotate(380deg); opacity: 0; }
+}
+
+/* Birds fly across screen */
+@keyframes birdFly {
+  0%   { transform: translateX(-140px) translateY(0px); opacity: 0; }
+  6%   { opacity: 1; }
+  94%  { opacity: 1; }
+  100% { transform: translateX(112vw) translateY(var(--drift, 0px)); opacity: 0; }
+}
+
+/* Wings flapping (applied to SVG wing paths) */
+@keyframes wingFlapUp {
+  0%, 100% { transform: rotateX(0deg) translateY(0px); }
+  50%       { transform: rotateX(-55deg) translateY(-6px); }
+}
+@keyframes wingFlapDown {
+  0%, 100% { transform: rotateX(0deg) translateY(0px); }
+  50%       { transform: rotateX(55deg) translateY(6px); }
+}
+
+/* Butterfly zigzag */
+@keyframes butterflyZig {
+  0%   { transform: translateX(-100px) translateY(0px) rotate(0deg); opacity: 0; }
+  6%   { opacity: 0.8; }
+  28%  { transform: translateX(24vw)  translateY(-60px) rotate(8deg); }
+  52%  { transform: translateX(50vw)  translateY(28px)  rotate(-8deg); }
+  76%  { transform: translateX(76vw)  translateY(-50px) rotate(6deg); }
+  94%  { opacity: 0.8; }
+  100% { transform: translateX(110vw) translateY(0px)   rotate(0deg); opacity: 0; }
+}
+
+/* Butterfly wings fold/open */
+@keyframes wingFold {
+  0%, 100% { transform: scaleX(1)   rotateY(0deg); }
+  50%       { transform: scaleX(0.2) rotateY(70deg); }
+}
+
+/* Leaf sway + float */
+@keyframes leafFloat {
+  0%   { transform: translateY(110vh) rotate(-20deg) scale(0.8); opacity: 0; }
+  8%   { opacity: 0.7; }
+  50%  { transform: translateY(45vh)  rotate(15deg)  scale(1); }
+  92%  { opacity: 0.5; }
+  100% { transform: translateY(-80px) rotate(-10deg) scale(0.9); opacity: 0; }
+}
+
+/* Firefly glow pulse */
+@keyframes fireflyFloat {
+  0%   { transform: translate(0, 0) scale(1);    opacity: 0; }
   10%  { opacity: 1; }
+  30%  { transform: translate(var(--fx, 20px), var(--fy, -30px)) scale(1.4); }
+  60%  { transform: translate(var(--fx2,−15px), var(--fy2,10px)) scale(0.8); }
   90%  { opacity: 0.6; }
-  100% { transform: translateY(-120px) rotate(360deg); opacity: 0; }
+  100% { transform: translate(var(--fx3,30px), var(--fy3,-50px)) scale(1); opacity: 0; }
+}
+
+/* Scan result burst */
+@keyframes resultBurst {
+  0%   { transform: translate(0,0) scale(0.2) rotate(0deg); opacity: 1; }
+  55%  { opacity: 1; }
+  100% { transform: translate(var(--tx,0px),var(--ty,0px)) scale(1.8) rotate(var(--rot,0deg)); opacity: 0; }
 }
 
 /* Splash screen fade */
 @keyframes splashFadeOut {
   from { opacity: 1; }
-  to   { opacity: 0; pointer-events: none; }
-}
-
-/* Birds flying horizontally across screen */
-@keyframes birdFly {
-  0%   { transform: translateX(-120px) translateY(0); opacity: 0; }
-  8%   { opacity: 0.75; }
-  50%  { transform: translateX(50vw) translateY(var(--drift, -20px)); }
-  92%  { opacity: 0.75; }
-  100% { transform: translateX(110vw) translateY(var(--drift, -20px)); opacity: 0; }
-}
-
-/* Butterfly zigzag across screen */
-@keyframes butterflyZig {
-  0%   { transform: translateX(-80px) translateY(0) rotate(0deg); opacity: 0; }
-  8%   { opacity: 0.65; }
-  28%  { transform: translateX(25vw)  translateY(-55px) rotate(12deg); }
-  52%  { transform: translateX(50vw)  translateY(25px)  rotate(-12deg); }
-  76%  { transform: translateX(76vw)  translateY(-45px) rotate(8deg); }
-  92%  { opacity: 0.65; }
-  100% { transform: translateX(108vw) translateY(0) rotate(0deg); opacity: 0; }
-}
-
-/* Scan result emoji burst */
-@keyframes resultBurst {
-  0%   { transform: translate(0, 0) scale(0.3) rotate(0deg); opacity: 1; }
-  60%  { opacity: 1; }
-  100% { transform: translate(var(--tx, 0px), var(--ty, 0px)) scale(1.6) rotate(var(--rot, 0deg)); opacity: 0; }
+  to   { opacity: 0; }
 }

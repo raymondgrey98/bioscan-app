@@ -4392,71 +4392,158 @@ function SplashScreen({ onDone }) {
   );
 }
 
-// ── Animated background particles ─────────────────────────────
-const PARTICLES = [
-  // Floating upward — plants & nature
-  ...['🌿','🍃','🌱','🌾','🌺','🌸','🍀','🌻','✦','·','🌟','💫'].map((emoji, i) => ({
-    id: i, type: 'float', emoji,
-    left: `${(i * 8.33 + 3) % 100}%`,
-    size: 2 + (i % 4),
-    duration: 15 + (i % 10) + 5,
-    delay: (i * 3.7) % 18,
-    opacity: 0.06 + (i % 5) * 0.025,
-  })),
-  // Flying horizontally — birds
-  ...['🐦','🦅','🦜','🕊️','🦢'].map((emoji, i) => ({
-    id: 100 + i, type: 'fly', emoji,
-    top: `${8 + (i * 13) % 55}%`,
-    size: 3 + (i % 3),
-    duration: 28 + (i * 6) % 18,
-    delay: (i * 9.3) % 35,
-    opacity: 0.13 + (i % 3) * 0.05,
-    drift: `${(i % 3 - 1) * 35}px`,
-  })),
-  // Zigzag across — butterflies & bees
-  ...['🦋','🐝','🦋'].map((emoji, i) => ({
-    id: 200 + i, type: 'zig', emoji,
-    top: `${20 + (i * 22) % 50}%`,
-    size: 2.5 + (i % 2),
-    duration: 32 + (i * 5) % 14,
-    delay: (i * 12.1) % 28,
-    opacity: 0.10 + (i % 3) * 0.04,
-  })),
+// ── Real SVG animated background creatures ────────────────────
+
+function SvgBird({ top, duration, delay, drift, scale = 1, color = 'rgba(255,255,255,0.55)' }) {
+  const flapSpeed = `${0.45 + Math.random() * 0.25}s`;
+  return (
+    <div style={{
+      position: 'absolute', top, left: 0, willChange: 'transform',
+      animation: `birdFly ${duration}s linear ${delay}s infinite`,
+      '--drift': drift,
+    }}>
+      <svg viewBox="0 0 110 55" width={110 * scale} height={55 * scale} style={{ overflow: 'visible' }}>
+        <g transform="translate(55,28)">
+          {/* Left wing */}
+          <path d="M0,0 Q-22,-14 -48,-7 Q-28,4 0,0"
+            fill={color}
+            style={{ transformOrigin:'0 0', animation:`wingFlapUp ${flapSpeed} ease-in-out infinite alternate` }} />
+          {/* Right wing */}
+          <path d="M0,0 Q22,-14 48,-7 Q28,4 0,0"
+            fill={color}
+            style={{ transformOrigin:'0 0', animation:`wingFlapDown ${flapSpeed} ease-in-out infinite alternate` }} />
+          {/* Body */}
+          <ellipse cx="0" cy="1" rx="7" ry="3" fill={color} />
+          {/* Tail */}
+          <path d="M-7,1 L-14,5 L-11,1 L-14,-3Z" fill={color} />
+          {/* Head */}
+          <circle cx="7" cy="-1" r="4" fill={color} />
+          {/* Beak */}
+          <path d="M11,-1 L17,-2.5 L11,1Z" fill="rgba(255,210,120,0.8)" />
+          {/* Eye */}
+          <circle cx="8.5" cy="-2" r="1" fill="rgba(0,0,0,0.4)" />
+        </g>
+      </svg>
+    </div>
+  );
+}
+
+function SvgButterfly({ top, duration, delay, scale = 1 }) {
+  const flapSpeed = `${0.35 + Math.random() * 0.2}s`;
+  const hue = [270, 310, 200, 160][Math.floor(Math.random() * 4)];
+  const c1 = `hsla(${hue},80%,65%,0.5)`;
+  const c2 = `hsla(${hue},70%,55%,0.35)`;
+  return (
+    <div style={{
+      position: 'absolute', top, left: 0, willChange: 'transform',
+      animation: `butterflyZig ${duration}s ease-in-out ${delay}s infinite`,
+    }}>
+      <svg viewBox="0 0 90 70" width={90 * scale} height={70 * scale} style={{ overflow: 'visible' }}>
+        <g transform="translate(45,35)">
+          {/* Left upper wing */}
+          <path d="M0,0 Q-22,-28 -38,-12 Q-22,-2 0,0" fill={c1}
+            style={{ transformOrigin:'0 0', animation:`wingFold ${flapSpeed} ease-in-out infinite alternate` }} />
+          {/* Left lower wing */}
+          <path d="M0,0 Q-28,8 -32,24 Q-16,20 0,0" fill={c2}
+            style={{ transformOrigin:'0 0', animation:`wingFold ${flapSpeed} ease-in-out infinite alternate` }} />
+          {/* Right upper wing */}
+          <path d="M0,0 Q22,-28 38,-12 Q22,-2 0,0" fill={c1}
+            style={{ transformOrigin:'0 0', animation:`wingFold ${flapSpeed} ease-in-out infinite alternate-reverse` }} />
+          {/* Right lower wing */}
+          <path d="M0,0 Q28,8 32,24 Q16,20 0,0" fill={c2}
+            style={{ transformOrigin:'0 0', animation:`wingFold ${flapSpeed} ease-in-out infinite alternate-reverse` }} />
+          {/* Body */}
+          <ellipse cx="0" cy="4" rx="2.5" ry="11" fill={`hsla(${hue},60%,30%,0.6)`} />
+          {/* Antennae */}
+          <path d="M-1.5,-7 Q-6,-19 -5,-23" fill="none" stroke={`hsla(${hue},70%,70%,0.5)`} strokeWidth="1.2"/>
+          <path d="M1.5,-7 Q6,-19 5,-23" fill="none" stroke={`hsla(${hue},70%,70%,0.5)`} strokeWidth="1.2"/>
+          <circle cx="-5" cy="-23" r="2" fill={`hsla(${hue},70%,70%,0.5)`}/>
+          <circle cx="5" cy="-23" r="2" fill={`hsla(${hue},70%,70%,0.5)`}/>
+        </g>
+      </svg>
+    </div>
+  );
+}
+
+function SvgLeaf({ left, duration, delay, scale = 1 }) {
+  const green = `rgba(${34 + (delay|0)%40},${160 + (delay|0)%37},${94 + (delay|0)%30},0.38)`;
+  return (
+    <div style={{
+      position: 'absolute', bottom: 0, left, willChange: 'transform',
+      animation: `leafFloat ${duration}s ease-in-out ${delay}s infinite`,
+    }}>
+      <svg viewBox="0 0 38 56" width={38 * scale} height={56 * scale}>
+        <path d="M19,52 C7,40 4,26 11,14 C15,6 23,4 27,11 C34,21 32,40 19,52Z" fill={green} />
+        <path d="M19,52 Q21,33 19,14" fill="none" stroke={green} strokeWidth="1.5" opacity="0.6"/>
+        {/* Side veins */}
+        <path d="M19,38 Q25,30 27,26" fill="none" stroke={green} strokeWidth="0.8" opacity="0.5"/>
+        <path d="M19,28 Q25,20 26,16" fill="none" stroke={green} strokeWidth="0.8" opacity="0.5"/>
+        <path d="M19,38 Q13,30 11,26" fill="none" stroke={green} strokeWidth="0.8" opacity="0.5"/>
+      </svg>
+    </div>
+  );
+}
+
+function SvgFirefly({ style }) {
+  return (
+    <div style={{ position: 'absolute', willChange: 'transform', ...style }}>
+      <svg viewBox="0 0 12 12" width="12" height="12">
+        <circle cx="6" cy="6" r="3" fill="rgba(255,255,150,0.9)">
+          <animate attributeName="r" values="2;4;2" dur="1.8s" repeatCount="indefinite"/>
+          <animate attributeName="opacity" values="0.4;1;0.4" dur="1.8s" repeatCount="indefinite"/>
+        </circle>
+        <circle cx="6" cy="6" r="6" fill="rgba(255,255,100,0.15)">
+          <animate attributeName="r" values="4;8;4" dur="1.8s" repeatCount="indefinite"/>
+        </circle>
+      </svg>
+    </div>
+  );
+}
+
+// Pre-computed creature positions (stable across renders)
+const BG_BIRDS = [
+  { top:'8%',  duration:32, delay:0,    drift:'-18px', scale:0.9 },
+  { top:'22%', duration:41, delay:8,    drift:'12px',  scale:1.1 },
+  { top:'14%', duration:36, delay:16,   drift:'-8px',  scale:0.8 },
+  { top:'38%', duration:45, delay:4,    drift:'20px',  scale:1.0 },
+  { top:'55%', duration:38, delay:22,   drift:'-15px', scale:0.85 },
+];
+const BG_BUTTERFLIES = [
+  { top:'18%', duration:44, delay:2,  scale:0.9 },
+  { top:'42%', duration:52, delay:14, scale:1.1 },
+  { top:'30%', duration:48, delay:28, scale:0.85 },
+];
+const BG_LEAVES = [
+  { left:'5%',  duration:18, delay:0,  scale:1.0 },
+  { left:'18%', duration:22, delay:4,  scale:0.85 },
+  { left:'32%', duration:16, delay:9,  scale:1.2 },
+  { left:'48%', duration:24, delay:2,  scale:0.9 },
+  { left:'63%', duration:19, delay:13, scale:1.0 },
+  { left:'75%', duration:21, delay:7,  scale:0.8 },
+  { left:'88%', duration:17, delay:17, scale:1.1 },
+  { left:'94%', duration:23, delay:5,  scale:0.95 },
+];
+const BG_FIREFLIES = [
+  { left:'12%', top:'65%', animDur:'6s',  animDelay:'0s'  },
+  { left:'28%', top:'55%', animDur:'8s',  animDelay:'2s'  },
+  { left:'55%', top:'70%', animDur:'7s',  animDelay:'4s'  },
+  { left:'72%', top:'60%', animDur:'9s',  animDelay:'1s'  },
+  { left:'85%', top:'75%', animDur:'6.5s',animDelay:'3s'  },
+  { left:'42%', top:'80%', animDur:'10s', animDelay:'5s'  },
 ];
 
 function AnimatedBg() {
   return (
     <div className="fixed inset-0 pointer-events-none overflow-hidden z-0" aria-hidden>
-      {PARTICLES.map(p => {
-        let style;
-        if (p.type === 'fly') {
-          style = {
-            top: p.top, left: 0,
-            fontSize: p.size * 4,
-            opacity: p.opacity,
-            '--drift': p.drift || '0px',
-            willChange: 'transform, opacity',
-            animation: `birdFly ${p.duration}s linear ${p.delay}s infinite`,
-          };
-        } else if (p.type === 'zig') {
-          style = {
-            top: p.top, left: 0,
-            fontSize: p.size * 4,
-            opacity: p.opacity,
-            willChange: 'transform, opacity',
-            animation: `butterflyZig ${p.duration}s ease-in-out ${p.delay}s infinite`,
-          };
-        } else {
-          style = {
-            bottom: 0, left: p.left,
-            fontSize: p.size * 4,
-            opacity: p.opacity,
-            willChange: 'transform, opacity',
-            animation: `floraFloat ${p.duration}s linear ${p.delay}s infinite`,
-          };
-        }
-        return <div key={p.id} className="absolute select-none" style={style}>{p.emoji}</div>;
-      })}
+      {BG_BIRDS.map((b, i) => <SvgBird key={`b${i}`} {...b} />)}
+      {BG_BUTTERFLIES.map((b, i) => <SvgButterfly key={`bf${i}`} {...b} />)}
+      {BG_LEAVES.map((l, i) => <SvgLeaf key={`l${i}`} {...l} />)}
+      {BG_FIREFLIES.map((f, i) => (
+        <SvgFirefly key={`ff${i}`} style={{
+          left: f.left, top: f.top,
+          animation: `fireflyFloat ${f.animDur} ease-in-out ${f.animDelay} infinite`,
+        }} />
+      ))}
     </div>
   );
 }
