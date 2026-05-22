@@ -2,7 +2,7 @@ import { Component, createContext, useCallback, useContext, useEffect, useRef, u
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 
-const API = import.meta.env.VITE_API_BASE_URL || localStorage.getItem('bioscan_api') || '/api';
+const API = import.meta.env.VITE_API_BASE_URL || localStorage.getItem('bioscan_api') || 'https://plant-scanner-wfl8.onrender.com/api';
 const CESIUM_TOKEN = import.meta.env.VITE_CESIUM_ION_TOKEN || '';
 
 const escHtml = s => String(s ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
