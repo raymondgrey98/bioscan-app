@@ -4394,34 +4394,120 @@ function SplashScreen({ onDone }) {
 
 // ── Real SVG animated background creatures ────────────────────
 
-function SvgBird({ top, duration, delay, drift, scale = 1, color = 'rgba(255,255,255,0.55)' }) {
-  const flapSpeed = `${0.45 + Math.random() * 0.25}s`;
+const BIRD_PALETTES = [
+  { body1:'rgba(240,248,255,0.82)', body2:'rgba(180,215,255,0.55)', wing:'rgba(170,210,255,0.52)', beak:'rgba(255,200,55,0.95)', crest:'rgba(100,180,255,0.72)' },
+  { body1:'rgba(120,245,190,0.82)', body2:'rgba(35,195,135,0.55)',  wing:'rgba(70,200,155,0.50)',  beak:'rgba(255,155,35,0.95)', crest:'rgba(40,230,120,0.72)' },
+  { body1:'rgba(255,195,120,0.82)', body2:'rgba(255,130,75,0.55)',  wing:'rgba(255,148,85,0.50)',  beak:'rgba(220,55,35,0.95)',  crest:'rgba(255,100,55,0.72)' },
+  { body1:'rgba(215,160,255,0.82)', body2:'rgba(155,95,240,0.55)',  wing:'rgba(175,115,245,0.50)', beak:'rgba(255,200,75,0.95)', crest:'rgba(200,115,255,0.72)' },
+  { body1:'rgba(95,215,255,0.82)',  body2:'rgba(35,155,240,0.55)',  wing:'rgba(60,190,255,0.50)',  beak:'rgba(255,225,45,0.95)', crest:'rgba(45,175,255,0.72)' },
+];
+
+const BIRD_CHIRPS = [
+  'Tweet! 🎵', 'Hello there! 👋', 'Beautiful day! ☀️',
+  'Scan something! 🔍', 'Nature is amazing ✨', 'I see you! 👀',
+  'So many plants 🌿', 'Chirp chirp! 🎶', 'The forest calls...',
+  'Did you spot me? 🐦', "Let's explore!", 'What a view! 🌍',
+  'Try the scanner!', 'Feeling birdy 🐤', 'Lovely weather!',
+];
+
+function InteractiveBird({ top, duration, delay, drift, scale = 1, uid = 'b0', paletteIdx = 0 }) {
+  const [speech, setSpeech] = useState(null);
+  const [hovered, setHovered] = useState(false);
+  const flapSpeed = useRef(`${0.38 + ((delay * 7) % 5) * 0.055}s`).current;
+  const p = BIRD_PALETTES[paletteIdx % BIRD_PALETTES.length];
+  const gradId = `birdGrad_${uid}`;
+
+  useEffect(() => {
+    const show = () => {
+      setSpeech(BIRD_CHIRPS[Math.floor(Math.random() * BIRD_CHIRPS.length)]);
+      setTimeout(() => setSpeech(null), 3200);
+    };
+    const id = setInterval(show, 20000 + delay * 1400 + Math.random() * 8000);
+    return () => clearInterval(id);
+  }, [delay]);
+
+  const onEnter = () => {
+    setHovered(true);
+    setSpeech(BIRD_CHIRPS[Math.floor(Math.random() * BIRD_CHIRPS.length)]);
+  };
+  const onLeave = () => {
+    setHovered(false);
+    setTimeout(() => setSpeech(null), 1800);
+  };
+
   return (
-    <div style={{
-      position: 'absolute', top, left: 0, willChange: 'transform',
-      animation: `birdFly ${duration}s linear ${delay}s infinite`,
-      '--drift': drift,
-    }}>
-      <svg viewBox="0 0 110 55" width={110 * scale} height={55 * scale} style={{ overflow: 'visible' }}>
-        <g transform="translate(55,28)">
-          {/* Left wing */}
-          <path d="M0,0 Q-22,-14 -48,-7 Q-28,4 0,0"
-            fill={color}
+    <div
+      style={{
+        position: 'absolute', top, left: 0, willChange: 'transform',
+        animation: `birdFly ${duration}s linear ${delay}s infinite`,
+        '--drift': drift, pointerEvents: 'auto', cursor: 'pointer', zIndex: 2,
+      }}
+      onMouseEnter={onEnter}
+      onMouseLeave={onLeave}
+    >
+      {speech && (
+        <div style={{
+          position: 'absolute',
+          bottom: `${Math.round(60 * scale) + 6}px`,
+          left: '50%',
+          transform: 'translateX(-40%)',
+          background: 'rgba(255,255,255,0.96)',
+          color: '#1a3020',
+          padding: '5px 13px',
+          borderRadius: '14px',
+          fontSize: '11px',
+          fontWeight: 700,
+          whiteSpace: 'nowrap',
+          pointerEvents: 'none',
+          boxShadow: '0 3px 18px rgba(0,0,0,0.22)',
+          animation: 'speechPop 0.35s cubic-bezier(0.34,1.56,0.64,1) forwards',
+          zIndex: 10,
+        }}>
+          {speech}
+          <div style={{
+            position: 'absolute', top: '100%', left: '38%',
+            transform: 'translateX(-50%)',
+            width: 0, height: 0,
+            borderLeft: '6px solid transparent',
+            borderRight: '6px solid transparent',
+            borderTop: '6px solid rgba(255,255,255,0.96)',
+          }} />
+        </div>
+      )}
+      <svg
+        viewBox="0 0 120 60"
+        width={120 * scale}
+        height={60 * scale}
+        style={{
+          overflow: 'visible',
+          transition: 'filter 0.3s, transform 0.3s',
+          filter: hovered ? `drop-shadow(0 0 12px ${p.body1})` : 'none',
+          transform: hovered ? 'scale(1.2)' : 'scale(1)',
+        }}
+      >
+        <defs>
+          <radialGradient id={gradId} cx="65%" cy="35%" r="65%">
+            <stop offset="0%" stopColor={p.body1} />
+            <stop offset="100%" stopColor={p.body2} />
+          </radialGradient>
+        </defs>
+        <g transform="translate(55,30)">
+          <path d="M0,0 Q-24,-17 -54,-9 Q-32,6 0,0" fill={p.wing}
             style={{ transformOrigin:'0 0', animation:`wingFlapUp ${flapSpeed} ease-in-out infinite alternate` }} />
-          {/* Right wing */}
-          <path d="M0,0 Q22,-14 48,-7 Q28,4 0,0"
-            fill={color}
+          <path d="M0,0 Q24,-17 54,-9 Q32,6 0,0" fill={p.wing}
             style={{ transformOrigin:'0 0', animation:`wingFlapDown ${flapSpeed} ease-in-out infinite alternate` }} />
-          {/* Body */}
-          <ellipse cx="0" cy="1" rx="7" ry="3" fill={color} />
-          {/* Tail */}
-          <path d="M-7,1 L-14,5 L-11,1 L-14,-3Z" fill={color} />
-          {/* Head */}
-          <circle cx="7" cy="-1" r="4" fill={color} />
-          {/* Beak */}
-          <path d="M11,-1 L17,-2.5 L11,1Z" fill="rgba(255,210,120,0.8)" />
-          {/* Eye */}
-          <circle cx="8.5" cy="-2" r="1" fill="rgba(0,0,0,0.4)" />
+          <ellipse cx="0" cy="1" rx="9" ry="4" fill={`url(#${gradId})`} />
+          <path d="M-9,0 L-20,5 L-17,1 L-20,-4Z" fill={p.body2} />
+          <path d="M-9,0 L-21,2 L-18,3Z" fill={p.crest} opacity="0.8" />
+          <path d="M-9,0 L-19,-2 L-17,-4 L-16,0Z" fill={p.body2} opacity="0.7" />
+          <circle cx="9" cy="-1" r="5.5" fill={`url(#${gradId})`} />
+          <path d="M9,-6.5 Q12,-13 11,-18 Q9,-13 9,-6.5" fill={p.crest} />
+          <path d="M10,-6.5 Q14,-11 14,-15 Q11,-11 10,-6.5" fill={p.crest} opacity="0.65" />
+          <path d="M14.5,-1.5 L23,-3 L14.5,2Z" fill={p.beak} />
+          <circle cx="11" cy="-3" r="2.8" fill="rgba(255,255,255,0.96)" />
+          <circle cx="11.6" cy="-3.2" r="1.7" fill="rgba(10,10,20,0.85)" />
+          <circle cx="12.4" cy="-3.8" r="0.7" fill="rgba(255,255,255,0.96)" />
+          <ellipse cx="12" cy="0.5" rx="3" ry="1.5" fill={p.crest} opacity="0.28" />
         </g>
       </svg>
     </div>
@@ -4502,11 +4588,14 @@ function SvgFirefly({ style }) {
 
 // Pre-computed creature positions (stable across renders)
 const BG_BIRDS = [
-  { top:'8%',  duration:32, delay:0,    drift:'-18px', scale:0.9 },
-  { top:'22%', duration:41, delay:8,    drift:'12px',  scale:1.1 },
-  { top:'14%', duration:36, delay:16,   drift:'-8px',  scale:0.8 },
-  { top:'38%', duration:45, delay:4,    drift:'20px',  scale:1.0 },
-  { top:'55%', duration:38, delay:22,   drift:'-15px', scale:0.85 },
+  { top:'6%',  duration:34, delay:0,    drift:'-20px', scale:0.90, uid:'b0', paletteIdx:0 },
+  { top:'20%', duration:42, delay:7,    drift:'14px',  scale:1.10, uid:'b1', paletteIdx:1 },
+  { top:'13%', duration:37, delay:15,   drift:'-10px', scale:0.80, uid:'b2', paletteIdx:2 },
+  { top:'36%', duration:46, delay:3,    drift:'22px',  scale:1.00, uid:'b3', paletteIdx:3 },
+  { top:'52%', duration:39, delay:21,   drift:'-16px', scale:0.85, uid:'b4', paletteIdx:4 },
+  { top:'44%', duration:44, delay:11,   drift:'8px',   scale:0.95, uid:'b5', paletteIdx:0 },
+  { top:'28%', duration:51, delay:28,   drift:'-24px', scale:1.05, uid:'b6', paletteIdx:1 },
+  { top:'63%', duration:35, delay:17,   drift:'18px',  scale:0.75, uid:'b7', paletteIdx:2 },
 ];
 const BG_BUTTERFLIES = [
   { top:'18%', duration:44, delay:2,  scale:0.9 },
@@ -4534,8 +4623,8 @@ const BG_FIREFLIES = [
 
 function AnimatedBg() {
   return (
-    <div className="fixed inset-0 pointer-events-none overflow-hidden z-0" aria-hidden>
-      {BG_BIRDS.map((b, i) => <SvgBird key={`b${i}`} {...b} />)}
+    <div className="fixed inset-0 overflow-hidden z-0" aria-hidden style={{ pointerEvents: 'none' }}>
+      {BG_BIRDS.map((b, i) => <InteractiveBird key={`b${i}`} {...b} />)}
       {BG_BUTTERFLIES.map((b, i) => <SvgButterfly key={`bf${i}`} {...b} />)}
       {BG_LEAVES.map((l, i) => <SvgLeaf key={`l${i}`} {...l} />)}
       {BG_FIREFLIES.map((f, i) => (
