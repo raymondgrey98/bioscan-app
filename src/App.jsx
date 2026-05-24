@@ -496,24 +496,146 @@ function PlantCard({ plant, onFavorite }) {
   );
 }
 
+// ── Location Tab ─────────────────────────────────────────────
+function LocationTab({ loc, distribution, habitat }) {
+  const mapRef = useRef(null);
+  const mapInst = useRef(null);
+  const hasGps = loc?.latitude && loc?.longitude;
+
+  useEffect(() => {
+    if (!hasGps || !mapRef.current) return;
+    if (mapInst.current) return;
+    const map = L.map(mapRef.current, { zoomControl: true, scrollWheelZoom: false })
+      .setView([loc.latitude, loc.longitude], 10);
+    L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+      attribution: '© OpenStreetMap © CARTO', maxZoom: 19,
+    }).addTo(map);
+    L.circleMarker([loc.latitude, loc.longitude], {
+      radius: 10, color: '#3d6b4f', fillColor: '#5a9e72', fillOpacity: 0.85, weight: 2,
+    }).addTo(map).bindPopup(
+      `<b>${loc.city || ''}${loc.city && loc.country ? ', ' : ''}${loc.country || 'Photo location'}</b><br/>
+       <span style="font-size:11px;color:#888">${loc.latitude.toFixed(5)}, ${loc.longitude.toFixed(5)}</span>`
+    ).openPopup();
+    mapInst.current = map;
+    return () => { map.remove(); mapInst.current = null; };
+  }, [hasGps, loc?.latitude, loc?.longitude]);
+
+  return (
+    <div className="space-y-3 text-sm">
+      {hasGps ? (
+        <>
+          <div ref={mapRef} className="w-full rounded-xl overflow-hidden border border-zinc-800" style={{ height: 220 }} />
+          <div className="grid grid-cols-2 gap-2">
+            {loc.country && <div className="bg-zinc-800/60 rounded-xl p-3"><p className="text-xs text-zinc-500 uppercase tracking-wide mb-0.5">Country</p><p className="text-zinc-200">🌍 {loc.country}</p></div>}
+            {loc.city    && <div className="bg-zinc-800/60 rounded-xl p-3"><p className="text-xs text-zinc-500 uppercase tracking-wide mb-0.5">City</p><p className="text-zinc-200">🏙️ {loc.city}</p></div>}
+            {loc.state   && <div className="bg-zinc-800/60 rounded-xl p-3"><p className="text-xs text-zinc-500 uppercase tracking-wide mb-0.5">State</p><p className="text-zinc-200">{loc.state}</p></div>}
+            {loc.street  && <div className="bg-zinc-800/60 rounded-xl p-3 col-span-2"><p className="text-xs text-zinc-500 uppercase tracking-wide mb-0.5">Street</p><p className="text-zinc-200">📍 {loc.street}</p></div>}
+          </div>
+          <div className="bg-zinc-800/40 rounded-xl p-3">
+            <p className="text-xs text-zinc-500 uppercase tracking-wide mb-0.5">GPS Coordinates</p>
+            <p className="text-zinc-200 font-mono text-xs">{loc.latitude.toFixed(6)}, {loc.longitude.toFixed(6)}</p>
+            <a href={`https://maps.google.com/?q=${loc.latitude},${loc.longitude}`} target="_blank" rel="noopener noreferrer"
+              className="text-xs text-green-400 hover:text-green-300 mt-1 inline-block underline underline-offset-2">
+              Open in Google Maps →
+            </a>
+          </div>
+        </>
+      ) : (
+        <div className="space-y-3">
+          <div className="bg-zinc-800/40 rounded-xl p-4 text-center">
+            <p className="text-2xl mb-2">📍</p>
+            <p className="text-zinc-400 text-sm font-medium">No GPS data in this photo</p>
+            <p className="text-zinc-600 text-xs mt-1">Enable location on your camera to auto-geotag future scans.</p>
+          </div>
+          {distribution && (
+            <div className="bg-zinc-800/60 rounded-xl p-3">
+              <p className="text-xs text-zinc-500 uppercase tracking-wide mb-1">🌍 Natural Distribution</p>
+              <p className="text-zinc-300 text-sm">{distribution}</p>
+            </div>
+          )}
+          {habitat && (
+            <div className="bg-zinc-800/60 rounded-xl p-3">
+              <p className="text-xs text-zinc-500 uppercase tracking-wide mb-1">🌿 Native Habitat</p>
+              <p className="text-zinc-300 text-sm">{habitat}</p>
+            </div>
+          )}
+          <a href="https://maps.google.com" target="_blank" rel="noopener noreferrer"
+            className="flex items-center justify-center gap-2 py-2.5 border border-zinc-700 rounded-xl text-xs text-zinc-400 hover:text-zinc-200 hover:border-zinc-500 transition-colors">
+            📌 Open Google Maps to find location manually
+          </a>
+        </div>
+      )}
+    </div>
+  );
+}
+
 // ── Scan Result ───────────────────────────────────────────────
 function ScanResult({ result, onSave }) {
   const [tab, setTab] = useState('overview');
+  const [imgErr, setImgErr] = useState(false);
   if (!result) return null;
 
-  // Normalize: handle POST /api/scans response, GET /api/scans/:id, history rows, etc.
   const a = result.result || result.result_json || result.identification?.result_json || result.identification || result;
   const taxon   = a.taxonomy || {};
   const danger  = a.danger_level ?? null;
   const conf    = a.confidence != null ? (a.confidence > 1 ? Math.round(a.confidence) : Math.round(a.confidence * 100)) : null;
   const loc     = result.location || {};
-  const imgSrc  = result.url || result.image_url || result.cloud_url || result.example_photo;
   const tabs = ['overview', 'survival', 'taxonomy', 'uses', 'location'];
+
+  // Image: try uploaded URL first, fall back to iNaturalist reference on error
+  const primaryImg  = result.url || result.image_url || result.cloud_url;
+  const fallbackImg = result.example_photo;
+  const imgSrc      = (!imgErr && primaryImg) ? primaryImg : fallbackImg;
+
+  // External databases — organized by type
+  const sci  = a.scientific_name;
+  const name = a.common_name || a.plant_name || '';
+  const q    = encodeURIComponent(sci || name);
+  const isPlant    = ['plant','tree','shrub','herb','grass','crop','weed','succulent','aquatic'].includes(a.subject_type);
+  const isAnimal   = ['bird','mammal','reptile','amphibian','fish','insect','spider'].includes(a.subject_type);
+  const isMushroom = ['mushroom','fungi'].includes(a.subject_type);
+
+  const databases = [
+    { label: '🌍 iNaturalist',           url: `https://www.inaturalist.org/search?q=${q}`,                            bg: 'bg-emerald-900 hover:bg-emerald-800' },
+    { label: '🔬 GBIF',                  url: `https://www.gbif.org/species/search?q=${q}`,                           bg: 'bg-zinc-700 hover:bg-zinc-600' },
+    { label: '📖 Wikipedia',             url: `https://en.wikipedia.org/wiki/Special:Search?search=${q}`,             bg: 'bg-slate-700 hover:bg-slate-600' },
+    { label: '🌐 Encyclopedia of Life',  url: `https://eol.org/search?q=${q}`,                                        bg: 'bg-blue-900 hover:bg-blue-800' },
+    { label: '🔭 ITIS',                  url: `https://www.itis.gov/servlet/SingleRpt/SingleRpt?search_topic=SNL&search_value=${q}`, bg: 'bg-indigo-900 hover:bg-indigo-800' },
+    ...(isPlant ? [
+      { label: '🌺 Plants of World (Kew)',  url: `https://powo.science.kew.org/results?q=${q}`,                       bg: 'bg-green-900 hover:bg-green-800' },
+      { label: '🌾 USDA PLANTS',            url: `https://plants.usda.gov/home/search?q=${q}`,                        bg: 'bg-lime-900 hover:bg-lime-800' },
+      { label: '🌿 PlantNet',              url: `https://identify.plantnet.org/the-plant-list/species/${q}/data`,      bg: 'bg-teal-900 hover:bg-teal-800' },
+      { label: '🏛️ Tropicos (MBG)',        url: `https://tropicos.org/search?name=${q}`,                              bg: 'bg-amber-900 hover:bg-amber-800' },
+      { label: '📚 World Flora Online',    url: `https://www.worldfloraonline.org/search?query=${q}`,                  bg: 'bg-green-950 hover:bg-green-900' },
+      { label: '🧬 NCBI Taxonomy',         url: `https://www.ncbi.nlm.nih.gov/Taxonomy/Browser/wwwtax.cgi?name=${q}`, bg: 'bg-blue-950 hover:bg-blue-900' },
+      { label: '🌱 Useful Plants (Kew)',    url: `https://usefulness.kew.org/search?searchTerm=${q}`,                  bg: 'bg-emerald-950 hover:bg-emerald-900' },
+    ] : []),
+    ...(isAnimal ? [
+      { label: '🔴 IUCN Red List',         url: `https://www.iucnredlist.org/search?query=${q}`,                      bg: 'bg-red-900 hover:bg-red-800' },
+      { label: '🐦 eBird (Birds)',          url: `https://ebird.org/search?q=${q}`,                                   bg: 'bg-sky-900 hover:bg-sky-800' },
+      { label: '🦎 Reptile Database',       url: `https://reptile-database.reptarium.cz/search?q=${q}`,               bg: 'bg-orange-900 hover:bg-orange-800' },
+      { label: '🧬 NCBI Taxonomy',          url: `https://www.ncbi.nlm.nih.gov/Taxonomy/Browser/wwwtax.cgi?name=${q}`,bg: 'bg-blue-950 hover:bg-blue-900' },
+      { label: '🌐 ARKive Archive',         url: `https://www.wildscreen.org/explore/?search=${q}`,                   bg: 'bg-cyan-900 hover:bg-cyan-800' },
+    ] : []),
+    ...(isMushroom ? [
+      { label: '🍄 MycoBank',              url: `https://www.mycobank.org/quicksearch.aspx?criteria=${q}`,             bg: 'bg-orange-900 hover:bg-orange-800' },
+      { label: '🔬 Index Fungorum',        url: `https://www.indexfungorum.org/names/names.asp?fusename=${q}`,         bg: 'bg-amber-900 hover:bg-amber-800' },
+      { label: '🔴 IUCN Red List',         url: `https://www.iucnredlist.org/search?query=${q}`,                      bg: 'bg-red-900 hover:bg-red-800' },
+    ] : []),
+    { label: '📜 BHL (Literature)',       url: `https://www.biodiversitylibrary.org/search?searchTerm=${q}`,          bg: 'bg-stone-700 hover:bg-stone-600' },
+    { label: '▶️ YouTube',               url: `https://www.youtube.com/results?search_query=${encodeURIComponent(name + ' identification')}`, bg: 'bg-red-700 hover:bg-red-600' },
+  ].filter(d => d.url && !d.url.includes('undefined'));
 
   return (
     <Card className="overflow-hidden">
-      {imgSrc && <img src={imgSrc} alt={a.common_name} className="w-full h-52 object-cover" />}
-      {result.example_photo && !imgSrc && <img src={result.example_photo} alt="Reference" className="w-full h-52 object-cover opacity-70" />}
+      {imgSrc && (
+        <img
+          src={imgSrc}
+          alt={a.common_name}
+          className="w-full h-52 object-cover"
+          onError={() => { if (!imgErr) setImgErr(true); }}
+        />
+      )}
       <div className="p-5">
         <div className="flex items-start justify-between gap-3 mb-1">
           <div>
@@ -617,36 +739,25 @@ function ScanResult({ result, onSave }) {
             {a.care_summary && <div><p className="text-xs font-medium text-zinc-500 uppercase tracking-wide mb-1">Cultivation Guide</p><p className="text-sm text-zinc-300">{a.care_summary}</p></div>}
             {a.conservation_status && <div><p className="text-xs font-medium text-zinc-500 uppercase tracking-wide mb-1">Conservation</p><Badge color={a.conservation_status.includes('Least') ? 'green' : 'amber'}>{a.conservation_status}</Badge></div>}
             {a.research_notes && <div><p className="text-xs font-medium text-zinc-500 uppercase tracking-wide mb-1">Research Notes</p><p className="text-sm text-zinc-400">{a.research_notes}</p></div>}
-            {/* External links */}
-            {a.scientific_name && (
-              <div className="pt-2 space-y-2">
-                <p className="text-xs font-bold text-zinc-500 uppercase tracking-wide">External Databases</p>
-                <a href={`https://www.inaturalist.org/search?q=${encodeURIComponent(a.scientific_name)}`} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 px-4 py-2 bg-emerald-800 hover:bg-emerald-700 text-white text-xs font-semibold rounded-xl transition">🌍 iNaturalist</a>
-                <a href={`https://www.gbif.org/species/search?q=${encodeURIComponent(a.scientific_name)}`} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 px-4 py-2 bg-zinc-700 hover:bg-zinc-600 text-white text-xs font-semibold rounded-xl transition">🔬 GBIF Database</a>
-                {a.subject_type?.includes('plant') || a.subject_type?.includes('tree') || a.subject_type?.includes('herb') ? (
-                  <a href={`https://www.worldfloraonline.org/search?query=${encodeURIComponent(a.scientific_name)}`} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 px-4 py-2 bg-green-900 hover:bg-green-800 text-white text-xs font-semibold rounded-xl transition">🌺 World Flora Online</a>
-                ) : null}
+            {/* External databases */}
+            {databases.length > 0 && (
+              <div className="pt-2">
+                <p className="text-xs font-bold text-zinc-500 uppercase tracking-wide mb-2">External Databases</p>
+                <div className="grid grid-cols-2 gap-2">
+                  {databases.map((d, i) => (
+                    <a key={i} href={d.url} target="_blank" rel="noopener noreferrer"
+                      className={`flex items-center gap-1.5 px-3 py-2 ${d.bg} text-white text-xs font-semibold rounded-xl transition`}>
+                      {d.label}
+                    </a>
+                  ))}
+                </div>
               </div>
             )}
           </div>
         )}
 
         {tab === 'location' && (
-          <div className="space-y-3 text-sm">
-            {loc.country || loc.city ? (
-              <>
-                {loc.country && <div className="bg-zinc-800/60 rounded-xl p-3"><p className="text-xs text-zinc-500 uppercase tracking-wide mb-0.5">Country</p><p className="text-zinc-200">🌍 {loc.country}</p></div>}
-                {loc.city && <div className="bg-zinc-800/60 rounded-xl p-3"><p className="text-xs text-zinc-500 uppercase tracking-wide mb-0.5">City</p><p className="text-zinc-200">🏙️ {loc.city}</p></div>}
-                {loc.street && <div><p className="text-xs text-zinc-500 uppercase tracking-wide mb-0.5">Street</p><p className="text-zinc-200">📍 {loc.street}</p></div>}
-                {loc.latitude && <div className="bg-zinc-800/60 rounded-xl p-3"><p className="text-xs text-zinc-500 uppercase tracking-wide mb-0.5">GPS Coordinates</p><p className="text-zinc-200 font-mono text-xs">{loc.latitude?.toFixed(5)}, {loc.longitude?.toFixed(5)}</p></div>}
-              </>
-            ) : (
-              <div className="text-center py-6">
-                <p className="text-zinc-500 text-sm">No GPS data in this photo.</p>
-                <p className="text-zinc-600 text-xs mt-1">Enable location on your camera and retake for automatic geo-tagging.</p>
-              </div>
-            )}
-          </div>
+          <LocationTab loc={loc} distribution={a.distribution} habitat={a.habitat} />
         )}
 
         {onSave && (
@@ -915,7 +1026,19 @@ function ScanPage({ onNav }) {
         </div>
       )}
 
-      {error && <p className="text-sm text-red-400 mb-4">{error}</p>}
+      {error && (
+        <div className="mb-4 p-4 bg-red-950/40 border border-red-700/40 rounded-xl flex gap-3 items-start">
+          <span className="text-red-400 text-lg shrink-0">⚠️</span>
+          <div className="flex-1 min-w-0">
+            <p className="text-sm text-red-300 font-medium">{error}</p>
+            <p className="text-xs text-red-500 mt-1">Check your connection or try a clearer photo.</p>
+          </div>
+          <button onClick={() => { setError(''); if (file) analyze(); }}
+            className="shrink-0 text-xs text-red-400 hover:text-red-200 underline underline-offset-2 transition-colors">
+            Retry
+          </button>
+        </div>
+      )}
 
       {aiModel && <p className="text-xs text-zinc-600 mb-3">Analyzed with <span className="text-green-400">{aiModel}</span></p>}
 
