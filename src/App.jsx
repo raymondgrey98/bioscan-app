@@ -582,8 +582,8 @@ function ScanResult({ result, onSave }) {
   const loc     = result.location || {};
   const tabs = ['overview', 'survival', 'taxonomy', 'uses', 'location'];
 
-  // Image: try uploaded URL first, fall back to iNaturalist reference on error
-  const primaryImg  = result.url || result.image_url || result.cloud_url;
+  // Image: only use URL if it's a real external URL (Cloudinary/http), not a broken local path
+  const primaryImg  = [result.url, result.image_url, result.cloud_url].find(u => u && u.startsWith('http'));
   const fallbackImg = result.example_photo;
   const imgSrc      = (!imgErr && primaryImg) ? primaryImg : fallbackImg;
 
@@ -4180,19 +4180,16 @@ function FloraBot() {
     setMsgs(m => [...m, { role: 'user', text: q }]);
     setLoading(true);
     try {
-      const r = await fetch(`${API}/chat`, {
+      const r = await fetch(`${API}/chat/public`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
-        body: JSON.stringify({ message: q }),
+        body: JSON.stringify({ question: q }),
       });
-      if (!r.ok) throw new Error(`Server error ${r.status}`);
-      const ct = r.headers.get('content-type') || '';
-      if (!ct.includes('application/json')) throw new Error('Unexpected response format');
+      if (!r.ok) { const e = await r.json().catch(() => ({})); throw new Error(e.error || `Server error ${r.status}`); }
       const d = await r.json();
-      setMsgs(m => [...m, { role: 'bot', text: d.reply || d.message || d.response || "I couldn't process that. Try again!" }]);
-    } catch {
-      setMsgs(m => [...m, { role: 'bot', text: "Connection issue — please try again in a moment." }]);
+      setMsgs(m => [...m, { role: 'bot', text: d.answer || d.reply || d.message || "I couldn't process that. Try again!" }]);
+    } catch (e) {
+      setMsgs(m => [...m, { role: 'bot', text: e.message?.includes('429') ? 'Too many messages — wait a moment and try again.' : "Connection issue — please try again in a moment." }]);
     }
     setLoading(false);
   };
