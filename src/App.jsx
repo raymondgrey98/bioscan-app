@@ -205,7 +205,7 @@ const DangerLevel = ({ level }) => {
     DANGEROUS: { bg: 'bg-orange-500/10', border: 'border-orange-500/30', text: 'text-orange-400', dot: 'bg-orange-400' },
     DEADLY:    { bg: 'bg-red-500/10',    border: 'border-red-500/30',    text: 'text-red-400',    dot: 'bg-red-400' },
   };
-  const l = levels[level?.toUpperCase()] || levels.CAUTION;
+  const l = levels[String(level || '').toUpperCase()] || levels.CAUTION;
   return (
     <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold border ${l.bg} ${l.border} ${l.text}`}>
       <span className={`w-1.5 h-1.5 rounded-full ${l.dot}`} />
@@ -2613,7 +2613,7 @@ function LandscapePage() {
 
   const safetyColor = label => {
     if (!label) return 'zinc';
-    const l = label.toUpperCase();
+    const l = String(label).toUpperCase();
     if (l === 'SAFE') return 'green';
     if (l === 'CAUTION') return 'amber';
     if (l === 'RISKY') return 'orange';
@@ -4606,7 +4606,6 @@ export default function App() {
       <ErrorBoundary>
         {!splashDone && <SplashScreen onDone={() => setSplashDone(true)} />}
         <div className="min-h-screen text-slate-100">
-          <AnimatedBg />
           <Navbar
             active={page}
             onNav={onNav}
